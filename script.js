@@ -1,3 +1,9 @@
+// Reference to the questions container and submit button
+const questionsElement = document.getElementById("questions");
+const submitButton = document.getElementById("submit");
+const scoreElement = document.getElementById("score");
+
+// Quiz Questions Array
 const questions = [
   {
     question: "What is the capital of France?",
@@ -26,66 +32,81 @@ const questions = [
   },
 ];
 
-const questionsElement = document.getElementById("questions");
-const submitButton = document.getElementById("submit");
-const scoreElement = document.getElementById("score");
+// Load saved progress from session storage
+function loadProgress() {
+  const savedAnswers = JSON.parse(sessionStorage.getItem("progress")) || {};
+  return savedAnswers;
+}
 
-// Retrieve stored progress from session storage
-const savedProgress = JSON.parse(sessionStorage.getItem("progress")) || {};
-
-// Display the quiz questions
+// Render quiz questions
 function renderQuestions() {
-  questionsElement.innerHTML = ""; // Clear previous questions
+  const savedAnswers = loadProgress();
+  questionsElement.innerHTML = "";
 
   questions.forEach((question, index) => {
     const questionElement = document.createElement("div");
-    questionElement.innerHTML = `<p>${question.question}</p>`;
+    questionElement.innerHTML = `<p>${index + 1}. ${question.question}</p>`;
 
     question.choices.forEach((choice) => {
       const choiceElement = document.createElement("input");
       choiceElement.setAttribute("type", "radio");
       choiceElement.setAttribute("name", `question-${index}`);
       choiceElement.setAttribute("value", choice);
-      
-      // Check if this option was previously selected
-      if (savedProgress[index] === choice) {
+
+      // If this choice was selected before, check it
+      if (savedAnswers[index] === choice) {
         choiceElement.checked = true;
       }
 
-      // Store selected answer in session storage
-      choiceElement.addEventListener("change", (event) => {
-        savedProgress[index] = event.target.value;
-        sessionStorage.setItem("progress", JSON.stringify(savedProgress));
+      // Save the answer in session storage when changed
+      choiceElement.addEventListener("change", () => {
+        const answers = loadProgress();
+        answers[index] = choice;
+        sessionStorage.setItem("progress", JSON.stringify(answers));
       });
 
-      const label = document.createElement("label");
-      label.appendChild(choiceElement);
-      label.appendChild(document.createTextNode(choice));
-      questionElement.appendChild(label);
+      // Create label for better UI
+      const choiceLabel = document.createElement("label");
+      choiceLabel.appendChild(choiceElement);
+      choiceLabel.append(` ${choice}`);
+
+      questionElement.appendChild(choiceLabel);
+      questionElement.appendChild(document.createElement("br"));
     });
 
     questionsElement.appendChild(questionElement);
   });
 }
 
-// Submit quiz and calculate score
-submitButton.addEventListener("click", () => {
+// Function to calculate score
+function calculateScore() {
+  const savedAnswers = loadProgress();
   let score = 0;
 
   questions.forEach((question, index) => {
-    if (savedProgress[index] === question.answer) {
+    if (savedAnswers[index] === question.answer) {
       score++;
     }
   });
 
-  scoreElement.textContent = `Your score is ${score} out of 5.`;
-  localStorage.setItem("score", score);
-});
-
-// Display previous score if available
-const savedScore = localStorage.getItem("score");
-if (savedScore !== null) {
-  scoreElement.textContent = `Your last score was ${savedScore} out of 5.`;
+  return score;
 }
 
+// Handle quiz submission
+submitButton.addEventListener("click", () => {
+  const finalScore = calculateScore();
+  localStorage.setItem("score", finalScore); // Store score in local storage
+  scoreElement.textContent = `Your score is ${finalScore} out of ${questions.length}.`;
+});
+
+// Display saved score if exists
+function displaySavedScore() {
+  const savedScore = localStorage.getItem("score");
+  if (savedScore !== null) {
+    scoreElement.textContent = `Your last score was ${savedScore} out of ${questions.length}.`;
+  }
+}
+
+// Initial setup
 renderQuestions();
+displaySavedScore();
