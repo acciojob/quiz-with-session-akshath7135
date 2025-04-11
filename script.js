@@ -35,7 +35,7 @@ const savedProgress = JSON.parse(sessionStorage.getItem("progress")) || {};
 
 // Display the quiz questions
 function renderQuestions() {
-  questionsElement.innerHTML = ""; // Clear existing content
+  questionsElement.innerHTML = ""; // Clear previous questions
 
   questions.forEach((question, index) => {
     const questionElement = document.createElement("div");
@@ -47,6 +47,7 @@ function renderQuestions() {
       choiceElement.setAttribute("name", `question-${index}`);
       choiceElement.setAttribute("value", choice);
       
+      // Check if this option was previously selected
       if (savedProgress[index] === choice) {
         choiceElement.checked = true;
       }
